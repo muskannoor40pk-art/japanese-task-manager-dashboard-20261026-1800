@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>タスク管理ダッシュボード</title>
+    
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>タスク管理ダッシュボード</h1>
+    </header>
+
+    <div class="card">
+        <form id="task-form" class="form-group">
+            <input type="text" id="task-input" placeholder="新しいタスクを入力..." required>
+            <select id="priority-input">
+                <option value="高">高</option>
+                <option value="中" selected>中</option>
+                <option value="低">低</option>
+            </select>
+            <button type="submit">追加</button>
+        </form>
+    </div>
+
+    <div class="filters">
+        <span>フィルター:</span>
+        <select id="filter-priority">
+            <option value="すべて">すべて</option>
+            <option value="高">高</option>
+            <option value="中">中</option>
+            <option value="低">低</option>
+        </select>
+    </div>
+
+    <div class="card" id="task-list">
+        <!-- Tasks injected here -->
+    </div>
+</div>
+
+<script>
+    const taskForm = document.getElementById('task-form');
+    const taskInput = document.getElementById('task-input');
+    const priorityInput = document.getElementById('priority-input');
+    const taskList = document.getElementById('task-list');
+    const filterPriority = document.getElementById('filter-priority');
+
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [
+        { id: 1, text: 'プロジェクト計画書の作成', priority: '高', date: new Date().toLocaleDateString('ja-JP') }
+    ];
+
+    function save() {
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+        render();
+    }
+
+    function render() {
+        const filter = filterPriority.value;
+        taskList.innerHTML = '';
+        
+        const filtered = filter === 'すべて' ? tasks : tasks.filter(t => t.priority === filter);
+
+        if (filtered.length === 0) {
+            taskList.innerHTML = '<p style="text-align:center; color:#94a3b8;">タスクがありません</p>';
+            return;
+        }
+
+        filtered.forEach(task => {
+            const div = document.createElement('div');
+            div.className = 'task-item';
+            div.innerHTML = `
+                <div class="task-info">
+                    <span class="task-title">${task.text}</span>
+                    <span class="task-meta">優先度: ${task.priority} | 登録日: ${task.date}</span>
+                </div>
+                <button class="delete" onclick="removeTask(${task.id})">削除</button>
+            `;
+            taskList.appendChild(div);
+        });
+    }
+
+    taskForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const newTask = {
+            id: Date.now(),
+            text: taskInput.value,
+            priority: priorityInput.value,
+            date: new Date().toLocaleDateString('ja-JP')
+        };
+        tasks.push(newTask);
+        taskInput.value = '';
+        save();
+    });
+
+    function removeTask(id) {
+        tasks = tasks.filter(t => t.id !== id);
+        save();
+    }
+
+    filterPriority.addEventListener('change', render);
+
+    render();
+</script>
+
+</body>
+</html>
